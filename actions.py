@@ -12,7 +12,7 @@
 from rasa_sdk import Action, Tracker
 from rasa_sdk.events import SlotSet, EventType
 from rasa_sdk.executor import CollectingDispatcher
-from actions.vital_sign_rest_api import fetch_vital_signs, fetch_aggr_signs, fetch_heath_status, prediction
+from actions.vital_sign_rest_api import fetch_vital_signs, fetch_aggr_signs, prediction
 # from actions.db import add_user, authenticate_user
 from typing import Dict, Text, List, Optional, Any
 from rasa_sdk.forms import FormValidationAction
@@ -119,19 +119,16 @@ class ActionCheckStatus(Action):
             tracker: Tracker,
             domain: "DomainDict",
     ) -> List[Dict[Text, Any]]:
-        # dispatcher.utter_message(template="utter_health_status", health_status="dssddsdsds")
-        prediction = fetch_heath_status()
-        if len(prediction) > 0:
-            output = prediction["msg"]
-
+        vital_signs = fetch_vital_signs()
+        if len(vital_signs) > 0:
+            tempr = vital_signs[0]["tempr"]
+            resp = vital_signs[0]["resp"]
+            hr = vital_signs[0]["hr"]
+            spo2 = vital_signs[0]["spo2"]
+            output = prediction(hr, spo2, resp, tempr)
             dispatcher.utter_message(template="utter_health_status",
                                      health_status=str(output))
             if output == str("Abnormal"):
-                vital_signs = fetch_vital_signs()
-                tempr = vital_signs[0]["tempr"]
-                resp = vital_signs[0]["resp"]
-                hr = vital_signs[0]["hr"]
-                spo2 = vital_signs[0]["spo2"]
                 if tempr >= 30:
                     dispatcher.utter_message(template="utter_exceed_tempr",
                                              tempr=str(tempr))
@@ -145,7 +142,6 @@ class ActionCheckStatus(Action):
                 elif resp <= 20:
                     dispatcher.utter_message(template="utter_less_resp",
                                              resp=str(resp))
-
                 if hr >= 30:
                     dispatcher.utter_message(template="utter_exceed_hr",
                                              hr=str(hr))
@@ -220,9 +216,13 @@ class ActionDiagnosticResponseAction(Action):
             tracker: Tracker,
             domain: "DomainDict",
     ) -> List[Dict[Text, Any]]:
-        prediction = fetch_heath_status()
-        if len(prediction) > 0:
-            output = prediction[0]["output"]
+        vital_signs = get_vital_signs()()
+        if len(vital_signs) > 0:
+            tempr = vital_signs[0]["tempr"]
+            resp = vital_signs[0]["resp"]
+            hr = vital_signs[0]["hr"]
+            spo2 = vital_signs[0]["spo2"]
+            output = prediction(hr, spo2, resp, tempr)
 
             if output == str("Abnormal"):
                 dispatcher.utter_message(template="utter_abnormal_response",
