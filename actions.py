@@ -216,7 +216,7 @@ class ActionDiagnosticResponseAction(Action):
             tracker: Tracker,
             domain: "DomainDict",
     ) -> List[Dict[Text, Any]]:
-        vital_signs = get_vital_signs()()
+        vital_signs = fetch_vital_signs()
         if len(vital_signs) > 0:
             tempr = vital_signs[0]["tempr"]
             resp = vital_signs[0]["resp"]
